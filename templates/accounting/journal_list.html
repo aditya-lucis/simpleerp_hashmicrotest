@@ -59,14 +59,19 @@
 
 <script>
     $(document).ready(function() {
-        // Inisialisasi DataTables dengan AJAX
+
+        function formatRupiah(angka) {
+            let num = parseFloat(angka);
+            if(isNaN(num)) return 'Rp 0,00';
+            return 'Rp ' + num.toLocaleString('id-ID', {minimumFractionDigits: 2});
+        }
+
         let table = $('#gejTable').DataTable({
             "processing": true,
-            "serverSide": false, // Kita handle datanya di client aja karena data test
+            "serverSide": false,
             "ajax": {
                 "url": "{% url 'journal_json' %}",
                 "type": "GET",
-                // Lempar nilai bulan & tahun dari select box ke backend
                 "data": function(d) {
                     d.month = $('#filterMonth').val();
                     d.year = $('#filterYear').val();
@@ -105,19 +110,15 @@
             }
         });
 
-        // Trigger filter ketika tombol diklik
         $('#btnFilter').on('click', function() {
-            // Memanggil ulang AJAX request ke backend dengan parameter baru
             table.ajax.reload();
         });
 
         $('#gejTable tbody').on('click', '.btn-view-detail', function() {
             let journalId = $(this).data('id');
             
-            // Generate URL dengan replace string
             let url = "{% url 'journal_detail_ajax' 9999 %}".replace('9999', journalId);
 
-            // Munculin efek loading (opsional tapi bagus buat UX)
             $('#mdl-table-body').html('<tr><td colspan="4" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>');
             $('#journalDetailModal').modal('show');
 
@@ -130,7 +131,7 @@
                     $('#mdl-description').text(response.description);
                     
                     let tbody = $('#mdl-table-body');
-                    tbody.empty(); // Bersihkan loading
+                    tbody.empty();
                     
                     response.details.forEach(function(item) {
                         let row = `<tr>
@@ -150,7 +151,7 @@
                 }
             });
         });
-        
+
     });
 </script>
 {% endblock %}

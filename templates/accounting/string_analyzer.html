@@ -62,7 +62,6 @@
 
 {% block scripts %}
 <script>
-    // Konfigurasi Token CSRF Django untuk AJAX
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -88,9 +87,8 @@
 
     $(document).ready(function() {
         $('#analyzerForm').on('submit', function(e) {
-            e.preventDefault(); // Mencegah reload browser
+            e.preventDefault();
             
-            // Ubah text tombol biar user tahu proses lagi jalan
             $('#btnAnalyze').text('Menganalisis...').attr('disabled', true);
 
             $.ajax({

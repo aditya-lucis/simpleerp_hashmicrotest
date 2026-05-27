@@ -209,7 +209,7 @@
     // Fungsi Tampilkan Alert Notifikasi
     function showAlert(status, message) {
         Swal.fire({
-            icon: status, // Akan otomatis membaca 'success' atau 'error' dari respon JSON
+            icon: status,
             title: status === 'success' ? 'Berhasil!' : 'Oops...',
             text: message,
             timer: 2500,
