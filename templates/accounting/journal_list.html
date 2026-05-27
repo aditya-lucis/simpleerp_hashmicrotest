@@ -51,6 +51,54 @@
         </div>
     </div>
 </div>
+
+<!-- PASTIKAN KODE INI ADA DI ATAS {% endblock content %} -->
+<div class="modal fade" id="journalDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title font-weight-bold"><i class="fas fa-file-invoice-dollar"></i> Detail Jurnal Umum</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3 bg-light p-3 rounded mx-1">
+            <div class="col-md-6">
+                <p class="mb-1"><strong>No. Referensi:</strong> <span id="mdl-reference" class="text-primary font-weight-bold"></span></p>
+                <p class="mb-0"><strong>Tanggal:</strong> <span id="mdl-date"></span></p>
+            </div>
+            <div class="col-md-6 text-md-right">
+                <p class="mb-0"><strong>Keterangan:</strong> <br><span id="mdl-description" class="text-muted"></span></p>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead class="thead-dark">
+                    <tr>
+                        <th width="15%">Kode</th>
+                        <th width="45%">Nama Akun</th>
+                        <th width="20%" class="text-right">Debit</th>
+                        <th width="20%" class="text-right">Kredit</th>
+                    </tr>
+                </thead>
+                <tbody id="mdl-table-body"></tbody>
+                <tfoot>
+                    <tr class="font-weight-bold bg-light">
+                        <td colspan="2" class="text-right">TOTAL BALANCE:</td>
+                        <td class="text-right text-primary" id="mdl-total-debit"></td>
+                        <td class="text-right text-primary" id="mdl-total-credit"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
