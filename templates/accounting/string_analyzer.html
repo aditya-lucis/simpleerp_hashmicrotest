@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}String Analyzer Tool{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">String Character Analyzer</h1>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Form Pengecekan Karakter</h6>
+                </div>
+                <div class="card-body">
+                    <form id="analyzerForm">
+                        <div class="form-group">
+                            <label>Input Karakter 1</label>
+                            <input type="text" id="input1" name="input1" class="form-control" placeholder="Contoh: ABBCD" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Input Karakter 2</label>
+                            <input type="text" id="input2" name="input2" class="form-control" placeholder="Contoh: Gallant Duck" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipe Validasi Case</label>
+                            <select id="case_type" name="case_type" class="form-control">
+                                <option value="sensitive">Sensitive Case</option>
+                                <option value="non-sensitive">Non-Sensitive Case</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="btnAnalyze" class="btn btn-success btn-block">Analisis Sekarang</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div id="resultCard" class="card shadow mb-4 border-left-success d-none">
+                <div class="card-header py-3 bg-success">
+                    <h6 class="m-0 font-weight-bold text-white">Hasil Analisis</h6>
+                </div>
+                <div class="card-body text-center">
+                    <p class="mb-1">Persentase Kecocokan Karakter:</p>
+                    <h1 id="resPercentage" class="display-3 font-weight-bold text-success">0%</h1>
+                    <hr>
+                    <div class="text-left">
+                        <h6>Detail Input:</h6>
+                        <ul>
+                            <li><strong>Input 1:</strong> "<span id="resInput1"></span>"</li>
+                            <li><strong>Input 2:</strong> "<span id="resInput2"></span>"</li>
+                            <li><strong>Mode:</strong> <span id="resType" class="text-capitalize"></span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Konfigurasi Token CSRF Django untuk AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+    $(document).ready(function() {
+        $('#analyzerForm').on('submit', function(e) {
+            e.preventDefault(); // Mencegah reload browser
+            
+            // Ubah text tombol biar user tahu proses lagi jalan
+            $('#btnAnalyze').text('Menganalisis...').attr('disabled', true);
+
+            $.ajax({
+                url: "{% url 'string_analyzer_ajax' %}",
+                type: "POST",
+                data: $(this).serialize(),
+                success: function(response) {
+                    $('#btnAnalyze').text('Analisis Sekarang').attr('disabled', false);
+                    
+                    if(response.status === 'success') {
+                        
+                        $('#resPercentage').text(response.percentage);
+                        $('#resInput1').text(response.input1);
+                        $('#resInput2').text(response.input2);
+                        $('#resType').text(response.case_type);
+                        
+                        $('#resultCard').hide().removeClass('d-none').fadeIn('fast');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Peringatan',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function() {
+                    $('#btnAnalyze').text('Analisis Sekarang').attr('disabled', false);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Kesalahan Sistem',
+                        text: 'Terjadi kesalahan pada server.'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Akuntansi{% endblock %}
+
+{% block content %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+
+<div class="container-fluid">
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Dashboard Akuntansi</h1>
+  </div>
+
+  <div class="row">
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Aset (Harta)</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ total_asset|floatformat:2 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-wallet fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card border-left-danger shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Total Kewajiban (Hutang)</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ total_liability|floatformat:2 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Ekuitas (Modal)</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ total_equity|floatformat:2 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-coins fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Pendapatan</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ total_revenue|floatformat:2 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-arrow-down fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Pengeluaran (Beban)</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ total_expense|floatformat:2 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-arrow-up fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card border-left-{% if net_profit >= 0 %}primary{% else %}danger{% endif %} shadow h-100 py-2 bg-light">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-{% if net_profit >= 0 %}primary{% else %}danger{% endif %} text-uppercase mb-1">Laba/Rugi Bersih</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">Rp {{ net_profit|floatformat:2 }}</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-chart-line fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">General Ledger</h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="coaBalanceTable" width="100%" cellspacing="0">
+          <thead>
+            <tr class="bg-primary text-white">
+              <th width="15%">Kode Akun</th>
+              <th width="30%">Nama Akun</th>
+              <th width="15%">Kelompok</th>
+              <th width="20%" class="text-right">Mutasi Debit</th>
+              <th width="20%" class="text-right">Mutasi Kredit</th>
+              <th width="20%" class="text-right">Saldo Akhir</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for acc in account_balances %}
+            <tr>
+              <td><span class="badge badge-dark">{{ acc.code }}</span></td>
+              <td>{{ acc.name }}</td>
+              <td>{{ acc.type }}</td>
+              <td class="text-right text-muted">{{ acc.debit|floatformat:2 }}</td>
+              <td class="text-right text-muted">{{ acc.credit|floatformat:2 }}</td>
+              <td class="text-right font-weight-bold {% if acc.balance < 0 %}text-danger{% else %}text-success{% endif %}">
+                Rp {{ acc.balance|floatformat:2 }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center">Belum ada transaksi jurnal.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#coaBalanceTable').DataTable({
+            "language": {
+                "search": "Cari Akun:",
+                "lengthMenu": "Tampil _MENU_ baris",
+                "info": "Menampilkan _START_ - _END_ dari _TOTAL_ akun",
+                "paginate": { "next": "Lanjut", "previous": "Kembali" }
+            },
+            "order": [[ 0, "asc" ]] // Urutkan berdasarkan Kode Akun
+        });
+    });
+</script>
+{% endblock scripts %}

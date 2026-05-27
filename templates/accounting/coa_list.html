@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daftar Akun (COA){% endblock %}
+
+{% block content %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Chart of Accounts (COA)</h1>
+        <button class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" onclick="showAddModal()">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Tambah Akun Baru
+        </button>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="coaTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Kode Akun</th>
+                            <th>Nama Akun</th>
+                            <th>Tipe Akun</th>
+                            <th width="15%" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="coaModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="coaForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Tambah CoA</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="acc_id" name="id">
+
+                    <div class="form-group">
+                        <label>Kode CoA</label>
+                        <input type="text" name="CoAcode" id="CoAcode" class="form-control" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Nama CoA</label>
+                        <input type="text" id="acc_name" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipe CoA</label>
+                        <select id="acc_type" name="account_type" class="form-control" required>
+                            <option value="Asset">Asset</option>
+                            <option value="Liability">Liability</option>
+                            <option value="Equity">Equity</option>
+                            <option value="Revenue">Revenue</option>
+                            <option value="Expense">Expense</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+
+<script>
+    // Konfigurasi Token CSRF Django untuk AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+    let table;
+
+    $(document).ready(function() {
+        // Load DataTables via AJAX JSON Endpoint
+        table = $('#coaTable').DataTable({
+            ajax: "{% url 'coa_json' %}",
+            columns: [
+                { data: 'code' },
+                { data: 'name' },
+                { data: 'account_type' },
+                { 
+                    data: null, 
+                    className: "text-center",
+                    render: function (data, type, row) {
+                        return `
+                            <button class="btn btn-warning btn-sm" onclick="showEditModal(${row.id}, '${row.name}', '${row.account_type}', '${row.code}')" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteCoa(${row.id})" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        `;
+                    }
+                }
+            ]
+        });
+
+        // Event Submit Form via AJAX
+        $('#coaForm').on('submit', function(e) {
+            e.preventDefault();
+            $('#btnSave').text('Menyimpan...').attr('disabled', true);
+
+            $.ajax({
+                url: "{% url 'coa_save_ajax' %}",
+                type: "POST",
+                data: $(this).serialize(),
+                success: function(response) {
+                    $('#btnSave').text('Simpan').attr('disabled', false);
+                    $('#coaModal').modal('hide');
+                    showAlert(response.status, response.message);
+                    if(response.status === 'success') {
+                        table.ajax.reload(null, false); // Reload tabel tanpa reset pagination
+                    }
+                },
+                error: function() {
+                    $('#btnSave').text('Simpan').attr('disabled', false);
+                    showAlert('error', 'Terjadi kesalahan sistem!');
+                }
+            });
+        });
+    });
+
+    // Fungsi Buka Modal Tambah Data
+    function showAddModal() {
+        $('#coaForm')[0].reset();
+        $('#acc_id').val('');
+        $('#CoAcode').val('17.02.02.XX');
+        $('#modalTitle').text('Tambah CoA Baru');
+        $('#coaModal').modal('show');
+    }
+
+    // Fungsi Buka Modal Edit Data
+    function showEditModal(id, name, type, code) {
+        $('#acc_id').val(id);
+        $('#CoAcode').val(code);
+        $('#acc_name').val(name);
+        $('#acc_type').val(type);
+        $('#modalTitle').text('Edit CoA');
+        $('#coaModal').modal('show');
+    }
+
+    // Fungsi Hapus Data via AJAX
+    function deleteCoa(id) {
+        Swal.fire({
+            title: 'Yakin ingin menghapus?',
+            text: "Data akun ini tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74a3b',
+            cancelButtonColor: '#858796',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/coa/delete/${id}/`,
+                    type: "POST",
+                    success: function(response) {
+                        showAlert(response.status, response.message);
+                        if(response.status === 'success') {
+                            table.ajax.reload(null, false);
+                        }
+                    },
+                    error: function() {
+                        showAlert('error', 'Terjadi kesalahan jaringan.');
+                    }
+                });
+            }
+        });
+    }
+
+    // Fungsi Tampilkan Alert Notifikasi
+    function showAlert(status, message) {
+        Swal.fire({
+            icon: status, // Akan otomatis membaca 'success' atau 'error' dari respon JSON
+            title: status === 'success' ? 'Berhasil!' : 'Oops...',
+            text: message,
+            timer: 2500,
+            showConfirmButton: false
+        });
+    }
+</script>
+{% endblock %}

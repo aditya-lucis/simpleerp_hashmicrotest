@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Input General Journal{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Form Entri General Journal</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="POST" id="journalForm">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Tanggal</label>
+                        <input type="date" name="date" class="form-control" value="{{ today_str }}" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Nomor Referensi</label>
+                        <input type="text" name="reference" class="form-control" value="{{ default_reference }}" readonly>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Keterangan</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Catatan transaksi..."></textarea>
+                    </div>
+                </div>
+
+                <h5 class="mt-4">Detail Item Jurnal</h5>
+                <table class="table table-bordered" id="journalTable">
+                    <thead>
+                        <tr>
+                            <th width="40%">Akun (CoA)</th>
+                            <th width="30%">Debit (Rp)</th>
+                            <th width="30%">Kredit (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <select name="account_id[]" class="form-control" required>
+                                    <option value="">-- Pilih Akun --</option>
+                                    {% for acc in accounts %}
+                                        <option value="{{ acc.id }}">{{ acc }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="number" name="debit[]" class="form-control" step="0.01" value="0"></td>
+                            <td><input type="number" name="credit[]" class="form-control" step="0.01" value="0"></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select name="account_id[]" class="form-control" required>
+                                    <option value="">-- Pilih Akun --</option>
+                                    {% for acc in accounts %}
+                                        <option value="{{ acc.id }}">{{ acc }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="number" name="debit[]" class="form-control" step="0.01" value="0"></td>
+                            <td><input type="number" name="credit[]" class="form-control" step="0.01" value="0"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-secondary btn-sm" id="addRowBtn">+ Tambah Baris</button>
+                <hr>
+                <button type="submit" class="btn btn-primary">Simpan Transaksi Jurnal</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('addRowBtn').addEventListener('click', function() {
+        var table = document.getElementById('journalTable').getElementsByTagName('tbody')[0];
+        var firstRow = table.rows[0];
+        var newRow = firstRow.cloneNode(true);
+        
+        var inputs = newRow.getElementsByTagName('input');
+        for (var i = 0; i < inputs.length; i++) { inputs[i].value = "0"; }
+        newRow.getElementsByTagName('select')[0].selectedIndex = 0;
+        
+        table.appendChild(newRow);
+    });
+
+    $('#journalForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        Swal.fire({
+            title: 'Simpan Jurnal?',
+            text: "Pastikan nominal Debit dan Kredit sudah seimbang (Balance).",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#4e73df',
+            cancelButtonColor: '#858796',
+            confirmButtonText: 'Ya, Simpan!',
+            cancelButtonText: 'Cek Lagi'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.submit(); 
+            }
+        });
+    });
+</script>
+{% endblock %}

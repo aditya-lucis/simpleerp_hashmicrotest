@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daftar General Journal{% endblock %}
+
+{% block content %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Daftar General Journal (GEJ)</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-light d-flex align-items-center">
+            <label class="mr-2 font-weight-bold mb-0">Filter Periode:</label>
+            
+            <select id="filterMonth" class="form-control mr-2" style="width: auto;">
+                {% for m_num, m_name in months %}
+                    <option value="{{ m_num }}" {% if m_num == selected_month %}selected{% endif %}>
+                        {{ m_name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select id="filterYear" class="form-control mr-3" style="width: auto;">
+                {% for y in years %}
+                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                        {{ y }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="button" id="btnFilter" class="btn btn-primary">
+                <i class="fas fa-filter"></i> Tampilkan
+            </button>
+            <a href="{% url 'journal_create' %}" class="btn btn-success ml-auto">
+                <i class="fas fa-plus"></i> Buat Jurnal Baru
+            </a>
+        </div>
+        
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="gejTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th width="15%">Tanggal</th>
+                            <th width="20%">No. Referensi (GEJ)</th>
+                            <th width="45%">Keterangan</th>
+                            <th width="20%">Total Amount (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+
+<script>
+    $(document).ready(function() {
+        // Inisialisasi DataTables dengan AJAX
+        let table = $('#gejTable').DataTable({
+            "processing": true,
+            "serverSide": false, // Kita handle datanya di client aja karena data test
+            "ajax": {
+                "url": "{% url 'journal_json' %}",
+                "type": "GET",
+                // Lempar nilai bulan & tahun dari select box ke backend
+                "data": function(d) {
+                    d.month = $('#filterMonth').val();
+                    d.year = $('#filterYear').val();
+                }
+            },
+            "columns": [
+                { data: 'date' },
+                { 
+                    data: 'reference',
+                    render: function(data) {
+                        return '<span class="badge badge-primary">' + data + '</span>';
+                    }
+                },
+                { data: 'description' },
+                { 
+                    data: 'total_amount', 
+                    className: "text-right" 
+                }
+            ],
+            "order": [[ 0, "desc" ]],
+            "language": {
+                "search": "Cari Cepat:",
+                "lengthMenu": "Tampilkan _MENU_ data per halaman",
+                "zeroRecords": "Tidak ada jurnal di periode ini",
+                "info": "Menampilkan halaman _PAGE_ dari _PAGES_",
+                "infoEmpty": "Tidak ada data tersedia",
+                "paginate": {
+                    "next": "Lanjut",
+                    "previous": "Kembali"
+                }
+            }
+        });
+
+        // Trigger filter ketika tombol diklik
+        $('#btnFilter').on('click', function() {
+            // Memanggil ulang AJAX request ke backend dengan parameter baru
+            table.ajax.reload();
+        });
+    });
+</script>
+{% endblock %}
