@@ -110,8 +110,14 @@
     $(document).ready(function() {
 
         function formatRupiah(angka) {
-            let num = parseFloat(angka);
-            if(isNaN(num)) return 'Rp 0,00';
+            if (!angka) return 'Rp 0,00';
+            
+            let strAngka = angka.toString().replace(/,/g, '');
+            
+            let num = parseFloat(strAngka);
+            
+            if (isNaN(num)) return 'Rp 0,00';
+            
             return 'Rp ' + num.toLocaleString('id-ID', {minimumFractionDigits: 2});
         }
 
