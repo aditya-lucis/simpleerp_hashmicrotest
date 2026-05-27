@@ -187,12 +187,37 @@ def journal_json(request):
     data = []
     for j in journals:
         data.append({
+            'id': j.id,
             'date': j.date.strftime('%d-%m-%Y'), # Format tanggal
             'reference': j.reference,
             'description': j.description if j.description else "-",
             'total_amount': f"{j.total_amount:,.2f}" # Format angka ribuan
         })
     return JsonResponse({'data': data})
+
+# 2.4 detail of general journal entry
+def journal_detail_ajax(request, pk):
+    header = get_object_or_404(JournalHeader, pk=pk)
+    details = JournalDetail.objects.filter(header=header).select_related('account')
+    detail_list = []
+
+    for d in details:
+        detail_list.append({
+            'account_code': d.account.code,
+            'account_name': d.account.name,
+            'debit': f"{d.debit:,.2f}",
+            'credit': f"{d.credit:,.2f}"
+        })
+
+    data = {
+        'reference': header.reference,
+        'date': header.date.strftime('%d-%m-%Y'),
+        'description': header.description,
+        'total_amount': float(header.total_amount),
+        'details': detail_list
+    }
+
+    return JsonResponse(data)
 
 # 3. String Analyzer
 

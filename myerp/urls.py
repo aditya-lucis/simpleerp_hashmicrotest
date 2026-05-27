@@ -29,6 +29,7 @@ urlpatterns = [
     path('journal/', acc_views.journal_list, name='journal_list'),
     path('journal/json/', acc_views.journal_json, name='journal_json'),
     path('journal/add/', acc_views.journal_create, name='journal_create'),
+    path('journal/ajax/<int:pk>/', acc_views.journal_detail_ajax, name='journal_detail_ajax'),
 
     # Chart of Accounts (CoA)
     path('coa/', acc_views.coa_page, name='coa_list'),
